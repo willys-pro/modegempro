@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Deriv Bot - Volatility 100</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <div class="container mx-auto p-4 max-w-7xl">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center pb-4 border-b border-gray-800 mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-red-500">Deriv AI Automation Pro</h1>
+                <p class="text-xs text-gray-400">Advanced Visual Framework for Volatility 100 Higher/Lower Markets</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700">
+                    <span class="text-xs text-gray-400 block uppercase tracking-wider font-semibold">Live Balance</span>
+                    <span id="account-balance" class="text-lg font-mono font-bold text-emerald-400">$0.00</span>
+                </div>
+                <div id="connection-status" class="px-3 py-1 rounded-full text-xs font-semibold bg-red-900 text-red-300">
+                    Disconnected
+                </div>
+            </div>
+        </header>
+
+        <!-- Notification Banner Area -->
+        <div id="outcome-banner" class="hidden mb-4 p-4 rounded-lg text-center font-bold text-lg animate-bounce transition-all duration-300"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Column 1: Configuration -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg space-y-4 lg:col-span-1">
+                <h2 class="text-lg font-semibold border-b border-gray-700 pb-2 text-gray-300">Configuration</h2>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">App ID</label>
+                    <input id="app-id" type="text" value="1089" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">API Token</label>
+                    <input id="api-token" type="password" placeholder="Paste your Deriv API token" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Market</label>
+                        <select id="market" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none">
+                            <option value="R_100">Volatility 100 Index</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Trade Type</label>
+                        <select id="trade-type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none">
+                            <option value="LOWER">LOWER</option>
+                            <option value="HIGHER">HIGHER</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Barrier Offset</label>
+                        <input id="barrier-offset" type="text" value="+0.49" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Stake (USD)</label>
+                        <input id="stake" type="number" value="10" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                    </div>
+                </div>
+
+                <button id="btn-connect" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded transition duration-200 cursor-pointer">
+                    Connect Engine
+                </button>
+            </div>
+
+            <!-- Column 2 & 3: Chart Visualization -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between lg:col-span-2 space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <h2 class="text-lg font-semibold text-gray-300">Real-time Tick Stream Chart</h2>
+                    <div id="proposal-payout" class="text-sm text-emerald-400 font-semibold">Payout Dynamic: --</div>
+                </div>
+                
+                <!-- Chart canvas box -->
+                <div class="relative flex-1 bg-gray-900 rounded p-2 min-h-[250px] flex items-center justify-center">
+                    <canvas id="liveChart"></canvas>
+                </div>
+
+                <div class="bg-gray-950 p-3 rounded border border-gray-700 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-gray-400 block">Current Spot Price</span>
+                        <div id="current-spot" class="text-2xl font-mono font-bold text-yellow-400">0.0000</div>
+                    </div>
+                    <button id="btn-manual-trade" disabled class="bg-gray-600 cursor-not-allowed text-white font-bold px-6 py-3 rounded opacity-50 transition">
+                        Execute Trade Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Column 4: Indicators & Logs -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between lg:col-span-1 space-y-4">
+                <div>
+                    <h2 class="text-lg font-semibold border-b border-gray-700 pb-2 text-gray-300 mb-4">Indicator Confluence</h2>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-center mb-4 text-xs">
+                        <div class="bg-gray-700 p-2 rounded">
+                            <div class="text-gray-400">RSI (14)</div>
+                            <div id="metric-rsi" class="text-sm font-bold text-gray-300">--</div>
+                        </div>
+                        <div class="bg-gray-700 p-2 rounded">
+                            <div class="text-gray-400">MA (9)</div>
+                            <div id="metric-ma" class="text-xs font-semibold text-gray-300 truncate">--</div>
+                        </div>
+                        <div class="bg-gray-700 p-2 rounded">
+                            <div class="text-gray-400">MACD Hist</div>
+                            <div id="metric-macd" class="text-xs font-semibold text-gray-300 truncate">--</div>
+                        </div>
+                        <div class="bg-gray-700 p-2 rounded">
+                            <div class="text-gray-400">Awesome Osc.</div>
+                            <div id="metric-ao" class="text-xs font-semibold text-gray-300 truncate">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col flex-1 min-h-[150px]">
+                    <span class="text-xs font-semibold text-gray-400 mb-1">Live Activity Log</span>
+                    <div id="console-log" class="bg-gray-950 p-2 rounded flex-1 overflow-y-auto font-mono text-[10px] space-y-1 text-emerald-500 h-full max-h-[180px]">
+                        <div>[System Init Complete] Waiting...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
